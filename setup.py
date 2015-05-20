@@ -32,6 +32,20 @@ try:
 except ImportError:
     from distutils.core import setup
 
+import sys
+
+if 'sdist' in sys.argv and 'upload' in sys.argv:
+    """ CLEAN THIS MESS UP RIGHT NOW YOUNG MAN """
+    import commands
+    import os
+    finder = "/usr/bin/find %s \( -name \*.pyc -or -name .DS_Store \) -delete"
+    theplace = os.getcwd()
+    if theplace not in (".", "/"):
+        print("+ Deleting crapola from %s..." % theplace)
+        print("$ %s" % finder % theplace)
+        commands.getstatusoutput(finder % theplace)
+        print("")
+
 setup(
 
     name=long_name, version=version, description=description,
@@ -48,7 +62,17 @@ setup(
     include_package_data=True,
     
     packages=[]+packages,
-    package_dir={},
+    
+    package_dir={
+        'rolodexer': 'rolodexer',
+    },
+    
+    entry_points={
+        'console_scripts': [
+            'rolodexer = rolodexer.cli:cli'
+        ],
+    },
+    
     package_data={},
     install_requires=['phonenumbers', 'docopt'],
 

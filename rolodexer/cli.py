@@ -22,8 +22,11 @@ import sys
 
 JSON_ARGS = dict(indent=2, sort_keys=True)
 
-def cli(argv):
-    arguments = docopt(__doc__, argv=argv,
+def cli(argv=None):
+    if not argv:
+        argv = sys.argv
+    
+    arguments = docopt(__doc__, argv=argv[1:],
                                 help=True,
                                 version='0.1.0')
     
@@ -62,4 +65,4 @@ def cli(argv):
                 json.dump(output_dict, fp, **JSON_ARGS)
 
 if __name__ == '__main__':
-    cli(sys.argv[1:])
+    cli(sys.argv)
