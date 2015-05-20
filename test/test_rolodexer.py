@@ -2,6 +2,7 @@
 
 import unittest
 import rolodexer
+import json
 
 sample_input = """
 Booker T., Washington, 87360, 373 781 7380, yellow
@@ -10,7 +11,7 @@ James Murphy, yellow, 83880, 018 154 6474
 asdfawefawea
 """.strip()
 
-sample_output = u"""
+sample_output = """
 {
   "entries": [
     {
@@ -36,6 +37,9 @@ sample_output = u"""
 """.strip()
 
 class RolodexerTests(unittest.TestCase):
+    
+    def setUp(self):
+        self.maxDiff = 1000
     
     def test_tokenize(self):
         # all of these should tokenize (even with invalid individual terms)
@@ -110,26 +114,39 @@ class RolodexerTests(unittest.TestCase):
     
     def test_classify(self):
         terms = [
-            'yellow', '373 781 7380', '87360',
-            'Washington', 'Booker T.']
+            u'yellow', u'373 781 7380', u'87360',
+            u'Washington', u'Booker T.']
         
         out = rolodexer.classify(terms)
         keys = out.keys()
         
-        self.assertTrue('phonenumber' in keys)
-        self.assertTrue('firstname' in keys)
-        self.assertTrue('lastname' in keys)
-        self.assertTrue('color' in keys)
-        self.assertTrue('zipcode' in keys)
+        self.assertTrue(u'phonenumber' in keys)
+        self.assertTrue(u'firstname' in keys)
+        self.assertTrue(u'lastname' in keys)
+        self.assertTrue(u'color' in keys)
+        self.assertTrue(u'zipcode' in keys)
         
-        self.assertEqual(out['color'],          terms[0])
-        self.assertEqual(out['phonenumber'],    rolodexer.phone_format(terms[1]))
-        self.assertEqual(out['zipcode'],        terms[2])
-        self.assertEqual(out['lastname'],       terms[3])
-        self.assertEqual(out['firstname'],      terms[4])
+        self.assertEqual(out[u'color'],          terms[0])
+        self.assertEqual(out[u'phonenumber'],    rolodexer.phone_format(terms[1]))
+        self.assertEqual(out[u'zipcode'],        terms[2])
+        self.assertEqual(out[u'lastname'],       terms[3])
+        self.assertEqual(out[u'firstname'],      terms[4])
+    
+    def _test_bad_line_raises(self):
+        """ assertRaises() is holding some sort of grudge
+            against my entire bloodline, for some reason
+        """
+        # from rolodexer import RDZipCodeError, RolodexerError
+        lines = sample_input.splitlines()
+        for idx, line in enumerate(lines):
+            terms = rolodexer.tokenize(line)
+            # with self.assertRaises(RDZipCodeError):
+            self.assertRaises(
+                Exception, 
+                rolodexer.classify, terms)
     
     def test_tokenize_classify(self):
-        from pprint import pprint
+        # from pprint import pprint
         entries = []
         errors  = []
         lines = sample_input.splitlines()
@@ -142,20 +159,20 @@ class RolodexerTests(unittest.TestCase):
             else:
                 keys = cterms.keys()
                 
-                self.assertTrue('phonenumber' in keys)
-                self.assertTrue('firstname' in keys)
-                self.assertTrue('lastname' in keys)
-                self.assertTrue('color' in keys)
-                self.assertTrue('zipcode' in keys)
-                
-                self.assertEqual(cterms['color'],       terms[0])
-                self.assertEqual(cterms['phonenumber'], rolodexer.phone_format(terms[1]))
-                self.assertEqual(cterms['zipcode'],     terms[2])
-                self.assertEqual(cterms['lastname'],    terms[3])
-                self.assertEqual(cterms['firstname'],   terms[4])
+                self.assertTrue(u'phonenumber' in keys)
+                self.assertTrue(u'firstname' in keys)
+                self.assertTrue(u'lastname' in keys)
+                self.assertTrue(u'color' in keys)
+                self.assertTrue(u'zipcode' in keys)
                 
                 entries.append(cterms)
-        pprint(dict(entries=entries, errors=errors))
+        
+        output_dict = { u"entries": entries, u"errors": errors }
+        # pprint(output_dict)
+        
+        sample_output_dict = json.loads(sample_output)
+        self.assertItemsEqual(
+            output_dict, sample_output_dict)
     
     def test_json_format(self):
         pass

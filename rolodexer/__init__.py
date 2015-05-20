@@ -5,7 +5,7 @@ import re
 import phonenumbers
 
 from copy import copy
-from pprint import pprint
+# from pprint import pprint
 from rolodexer.histogram import Histogram
 
 class RolodexerError(Exception): pass
@@ -38,7 +38,7 @@ def tokenize(line_input):
                              (zip|phone|color)"
     """
     terms  = []
-    line    = str(line_input)
+    line    = unicode(line_input)
     
     while True:
         partition   = line.rpartition(',')
@@ -84,34 +84,34 @@ def classify(orig_terms):
     for idx, term in enumerate(copy(terms)):
         # tref = terms[idx] # I do miss C++ sometimes
         if is_phone(term):
-            out.update({ 'phonenumber': phone_format(term) })
+            out.update({ u'phonenumber': u"%s" % phone_format(term) })
             # del terms[idx]
             terms.remove(term)
             continue
         elif is_color(term):
-            out.update({ 'color': term })
+            out.update({ u'color': u"%s" % term })
             # del terms[idx]
             terms.remove(term)
             continue
         elif is_zip(term):
-            out.update({ 'zipcode': term })
+            out.update({ u'zipcode': u"%s" % term })
             # del terms[idx]
             terms.remove(term)
             continue
     
-    if not out.has_key('phonenumber'):
+    if not out.has_key(u'phonenumber'):
         # ERROR: NO PHONE / BAD PHONE!
         raise RDPhoneNumberError("No valid phone number in %d-term list\n"
                                  "Reconstructed original line:\n"
                                  "\t%s" % (len(terms), reconstruct(orig_terms)))
     
-    if not out.has_key('zipcode'):
+    if not out.has_key(u'zipcode'):
         # ERROR: NO ZIPCODE / BAD ZIPCODE!
         raise RDZipCodeError("No valid zip code in %d-term list\n"
                              "Reconstructed original line:\n"
                              "\t%s" % (len(terms), reconstruct(orig_terms)))
     
-    if not out.has_key('color'):
+    if not out.has_key(u'color'):
         # LESS DISCONCERTING ERROR: NO COLOR / BAD COLOR!
         pass
     
@@ -122,15 +122,15 @@ def classify(orig_terms):
         pass
     elif len(terms) == 2:
         out.update({ 
-            'firstname':    terms[-1],
-            'lastname':     terms[0]
+            u'firstname':    u"%s" % terms[-1],
+            u'lastname':     u"%s" % terms[0]
         })
     elif len(terms) == 1:
         names = terms[0].split()
         if len(names) > 1:
             out.update({
-                'firstname':    names[0],
-                'lastname':     names[-1]
+                u'firstname':    u"%s" % names[0],
+                u'lastname':     u"%s" % names[-1]
             })
         else:
             # ERROR: only one name -- `raise MadonnaError()` ?
@@ -146,5 +146,5 @@ def classify(orig_terms):
                                "Reconstructed original line:\n"
                                "\t%s" % reconstruct(orig_terms))
         
-    pprint(out, indent=4)
+    # pprint(out, indent=4)
     return out
