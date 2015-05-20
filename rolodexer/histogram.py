@@ -71,12 +71,6 @@ class Histogram(defaultdict):
         super(Histogram, self).__init__(
             Histogram.autoinc, *tuple(), **kwargs)
     
-    # def __setitem__(self, i, y):
-    #     try:
-    #         self[i] = AutoInc(y)
-    #     except (ValueError, AttributeError): # failed integer conversion
-    #         self[i] = y
-    
     def prettyprint(self, **kwargs):
         from pprint import pformat
         return "%s%s" % (

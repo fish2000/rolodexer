@@ -2,8 +2,6 @@
 from __future__ import print_function
 
 import re
-# import sys
-# import usaddress
 import phonenumbers
 
 from copy import copy
@@ -15,6 +13,7 @@ class RDAmbiguousTerms(RolodexerError): pass
 class RDAmbiguousNames(RolodexerError): pass
 class RDAmbiguousNumber(RolodexerError): pass
 class RDPhoneNumberError(RolodexerError): pass
+class RDZipCodeError(RolodexerError): pass
 
 # simple line assumptions
 SEP     = ','
@@ -79,8 +78,7 @@ def classify(orig_terms):
                                    "Passed multiple tests: %s" % (
                                        term, SEP_WS.join(h.iterkeys())
                                    ))
-    # pprint(out)
-    # pprint(terms)
+    
     # next, recurse and grab the phone number and color
     # ... they are the easiest to find:
     for idx, term in enumerate(copy(terms)):
@@ -101,54 +99,22 @@ def classify(orig_terms):
             terms.remove(term)
             continue
     
-    # pprint(out)
-    # pprint(terms)
     if not out.has_key('phonenumber'):
         # ERROR: NO PHONE / BAD PHONE!
         raise RDPhoneNumberError("No valid phone number in %d-term list\n"
                                  "Reconstructed original line:\n"
                                  "\t%s" % (len(terms), reconstruct(orig_terms)))
     
+    if not out.has_key('zipcode'):
+        # ERROR: NO ZIPCODE / BAD ZIPCODE!
+        raise RDZipCodeError("No valid zip code in %d-term list\n"
+                             "Reconstructed original line:\n"
+                             "\t%s" % (len(terms), reconstruct(orig_terms)))
+    
     if not out.has_key('color'):
         # LESS DISCONCERTING ERROR: NO COLOR / BAD COLOR!
         pass
     
-    # now run it through usaddress;
-    # without the phone number present,
-    # zipcodes show up as either:
-    #   * 'ZipCode'             - good (5- or 9-digit)
-    #   * 'OccupancyIdentifier' - specious (likely contains hyphen)
-    #   * 'AddressNumber'       - WTF (nonsense digits)
-    '''
-    reconstructed = reconstruct(terms)
-    address = dict(map(
-        lambda tup: tuple(reversed(tup)),
-        usaddress.parse(reconstructed)))
-    # address = usaddress.parse(reconstructed)
-    zip_term = ''
-    
-    print("RECONSTRUCTED: %s" % reconstructed)
-    print("ADDRESS: %s" % address)
-    
-    if address.has_key('ZipCode'):
-        # all set
-        zip_term = str(address.get('ZipCode'))
-    elif address.has_key('OccupancyIdentifier'):
-        # ERROR: zipcode possibly F'd
-        # trim to something sane?
-        zip_term = str(address.get('OccupancyIdentifier'))
-    elif address.has_key('AddressNumber'):
-        # ERROR SRSLY: couldn't positively ID a zip
-        # ... oh well, it takes all kinds, as they say:
-        zip_term = str(address.get('AddressNumber'))
-    
-    if zip_term:
-        out.update({ 'zipcode': zip_term }) # update output dict
-        terms.remove(zip_term)              # pluck out the zip term
-    
-    # is it an ERROR if there is no zipcode?
-    # ... wow, that's, like, a zen koan or somesuch
-    '''
     # what is left "should" be the pieces of the name,
     # e.g. ['Washington', 'Booker T.'], ['James Murphy'], &c
     if len(terms) > 2:
