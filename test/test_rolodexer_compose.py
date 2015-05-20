@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import unittest
-import rolodexer
+from rolodexer import compose as rolodexer
 import json
 
 sample_input = """
@@ -55,63 +55,6 @@ class RolodexerTests(unittest.TestCase):
         self.assertEqual(len(terms1), 5)
         self.assertEqual(len(terms2), 4) # first/last are single term
     
-    def test_identify_color(self):
-        self.assertTrue(rolodexer.is_color('yellow'))
-        self.assertTrue(rolodexer.is_color('pink'))
-        self.assertTrue(rolodexer.is_color('aqua marine'))
-        
-        self.assertFalse(rolodexer.is_color('Booker T.'))
-        self.assertFalse(rolodexer.is_color('Washington'))
-        self.assertFalse(rolodexer.is_color('Chandler'))
-        self.assertFalse(rolodexer.is_color('Kerri'))
-        self.assertFalse(rolodexer.is_color('James'))
-        self.assertFalse(rolodexer.is_color('Murphy'))
-        self.assertFalse(rolodexer.is_color('87360'))
-        self.assertFalse(rolodexer.is_color('373 781 7380'))
-        self.assertFalse(rolodexer.is_color('(623)-668-9293'))
-        self.assertFalse(rolodexer.is_color('123123121'))
-        self.assertFalse(rolodexer.is_color('83880'))
-        self.assertFalse(rolodexer.is_color('018 154 6474'))
-    
-    def test_identify_phone(self):
-        self.assertTrue(rolodexer.is_phone('373 781 7380'))
-        self.assertTrue(rolodexer.is_phone('(623)-668-9293'))
-        self.assertTrue(rolodexer.is_phone('018 154 6474'))
-        
-        # this should (problematically) read as a phone number
-        # self.assertTrue(rolodexer.is_phone('123123121'))
-        
-        self.assertFalse(rolodexer.is_phone('Booker T.'))
-        self.assertFalse(rolodexer.is_phone('Washington'))
-        self.assertFalse(rolodexer.is_phone('Chandler'))
-        self.assertFalse(rolodexer.is_phone('Kerri'))
-        self.assertFalse(rolodexer.is_phone('James'))
-        self.assertFalse(rolodexer.is_phone('Murphy'))
-        self.assertFalse(rolodexer.is_phone('87360'))
-        self.assertFalse(rolodexer.is_phone('83880'))
-        self.assertFalse(rolodexer.is_phone('yellow'))
-        self.assertFalse(rolodexer.is_phone('pink'))
-        self.assertFalse(rolodexer.is_phone('aqua marine'))
-    
-    def test_identify_zip(self):
-        self.assertTrue(rolodexer.is_zip('83880'))
-        self.assertTrue(rolodexer.is_zip('87360'))
-        # self.assertTrue(rolodexer.is_zip('02459-1234'))
-        
-        self.assertFalse(rolodexer.is_zip('Booker T.'))
-        self.assertFalse(rolodexer.is_zip('Washington'))
-        self.assertFalse(rolodexer.is_zip('Chandler'))
-        self.assertFalse(rolodexer.is_zip('Kerri'))
-        self.assertFalse(rolodexer.is_zip('James'))
-        self.assertFalse(rolodexer.is_zip('Murphy'))
-        self.assertFalse(rolodexer.is_zip('pink'))
-        self.assertFalse(rolodexer.is_zip('aqua marine'))
-        self.assertFalse(rolodexer.is_zip('373 781 7380'))
-        self.assertFalse(rolodexer.is_zip('(623)-668-9293'))
-        self.assertFalse(rolodexer.is_zip('123123121'))
-        self.assertFalse(rolodexer.is_zip('yellow'))
-        self.assertFalse(rolodexer.is_zip('018 154 6474'))
-    
     def test_classify(self):
         terms = [
             u'yellow', u'373 781 7380', u'87360',
@@ -126,8 +69,10 @@ class RolodexerTests(unittest.TestCase):
         self.assertTrue(u'color' in keys)
         self.assertTrue(u'zipcode' in keys)
         
+        phonefield = rolodexer.PhoneNumberField()
+        
         self.assertEqual(out[u'color'],          terms[0])
-        self.assertEqual(out[u'phonenumber'],    rolodexer.phone_format(terms[1]))
+        self.assertEqual(out[u'phonenumber'],    phonefield.format(terms[1]))
         self.assertEqual(out[u'zipcode'],        terms[2])
         self.assertEqual(out[u'lastname'],       terms[3])
         self.assertEqual(out[u'firstname'],      terms[4])
@@ -178,7 +123,7 @@ class RolodexerTests(unittest.TestCase):
         pass
     
     def test_file_read(self):
-        
+        pass
 
 if __name__ == '__main__':
     unittest.main()

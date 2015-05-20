@@ -85,17 +85,14 @@ def classify(orig_terms):
         # tref = terms[idx] # I do miss C++ sometimes
         if is_phone(term):
             out.update({ u'phonenumber': u"%s" % phone_format(term) })
-            # del terms[idx]
             terms.remove(term)
             continue
         elif is_color(term):
             out.update({ u'color': u"%s" % term })
-            # del terms[idx]
             terms.remove(term)
             continue
         elif is_zip(term):
             out.update({ u'zipcode': u"%s" % term })
-            # del terms[idx]
             terms.remove(term)
             continue
     
