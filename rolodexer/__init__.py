@@ -107,7 +107,7 @@ def classify(orig_terms):
         # ERROR: NO PHONE / BAD PHONE!
         raise RDPhoneNumberError("No valid phone number in %d-term list\n"
                                  "Reconstructed original line:\n"
-                                 "\t%s" % (len(terms), reconstruct(orig)))
+                                 "\t%s" % (len(terms), reconstruct(orig_terms)))
     
     if not out.has_key('color'):
         # LESS DISCONCERTING ERROR: NO COLOR / BAD COLOR!
@@ -172,13 +172,13 @@ def classify(orig_terms):
             # ... naw, f that: ERROR.
             raise RDAmbiguousNames("Only one name present: '%s'\n"
                                    "Reconstructed original line:\n"
-                                   "\t%s" % (names.pop(), reconstruct(orig)))
+                                   "\t%s" % (names.pop(), reconstruct(orig_terms)))
         
     else:
         # WHY ARE WE HERE. No names... really??
         raise RDAmbiguousNames("No names present!"
                                "Reconstructed original line:\n"
-                               "\t%s" % reconstruct(orig))
+                               "\t%s" % reconstruct(orig_terms))
         
     pprint(out, indent=4)
     return out

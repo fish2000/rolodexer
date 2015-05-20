@@ -129,7 +129,33 @@ class RolodexerTests(unittest.TestCase):
         self.assertEqual(out['firstname'],      terms[4])
     
     def test_tokenize_classify(self):
-        pass
+        from pprint import pprint
+        entries = []
+        errors  = []
+        lines = sample_input.splitlines()
+        for idx, line in enumerate(lines):
+            terms = rolodexer.tokenize(line)
+            try:
+                cterms = rolodexer.classify(terms)
+            except rolodexer.RolodexerError:
+                errors.append(idx)
+            else:
+                keys = cterms.keys()
+                
+                self.assertTrue('phonenumber' in keys)
+                self.assertTrue('firstname' in keys)
+                self.assertTrue('lastname' in keys)
+                self.assertTrue('color' in keys)
+                self.assertTrue('zipcode' in keys)
+                
+                self.assertEqual(cterms['color'],       terms[0])
+                self.assertEqual(cterms['phonenumber'], rolodexer.phone_format(terms[1]))
+                self.assertEqual(cterms['zipcode'],     terms[2])
+                self.assertEqual(cterms['lastname'],    terms[3])
+                self.assertEqual(cterms['firstname'],   terms[4])
+                
+                entries.append(cterms)
+        pprint(dict(entries=entries, errors=errors))
     
     def test_json_format(self):
         pass
