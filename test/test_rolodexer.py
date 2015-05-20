@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import unittest
 import rolodexer
 import json
@@ -123,7 +125,28 @@ class RolodexerTests(unittest.TestCase):
         pass
     
     def test_file_read(self):
-        pass
+        from os.path import join, dirname
+        entries = []
+        errors  = []
+        inpth = join(dirname(dirname(__file__)), 'data', 'data.in')
+        with open(inpth, 'rb') as fh:
+            idx = 0
+            while True:
+                linen = fh.readline()
+                if not linen:
+                    break
+                line = linen.strip()
+                tokens = rolodexer.tokenize(line)
+                try:
+                    terms = rolodexer.classify(tokens)
+                except rolodexer.RolodexerError:
+                    errors.append(idx)
+                else:
+                    entries.append(terms)
+                idx += 1
+            output_dict = { u"entries": entries, u"errors": errors }
+            output_json = json.dumps(output_dict, indent=2, sort_keys=True)
+            print(output_json)
 
 if __name__ == '__main__':
     unittest.main()
@@ -138,4 +161,4 @@ if __name__ == '__yodogg__':
         if not first and not last:
             break
         line = first
-        print last
+        print(last)

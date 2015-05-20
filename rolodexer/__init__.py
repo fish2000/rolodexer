@@ -3,7 +3,7 @@ import re
 import phonenumbers
 
 from copy import copy
-from pprint import pprint
+# from pprint import pprint
 from rolodexer.histogram import Histogram
 
 SEP     = ','
@@ -132,7 +132,7 @@ def classify(token_list):
     out = dict()
     tokens = copy(token_list)
     
-    pprint(FIELD_DMV)
+    # pprint(FIELD_DMV)
     
     # first, sanity-check the digified tokens --
     # if more than one can pass for a phone number, a color,
