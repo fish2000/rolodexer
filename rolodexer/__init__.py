@@ -1,12 +1,15 @@
 
-from __future__ import print_function
-
 import re
 import phonenumbers
 
 from copy import copy
-# from pprint import pprint
+from pprint import pprint
 from rolodexer.histogram import Histogram
+
+SEP     = ','
+SEP_WS  = ', '
+D = re.compile(r'\D+')
+FIELD_DMV = []
 
 class RolodexerError(Exception): pass
 class RDAmbiguousTerms(RolodexerError): pass
@@ -15,29 +18,103 @@ class RDAmbiguousNumber(RolodexerError): pass
 class RDPhoneNumberError(RolodexerError): pass
 class RDZipCodeError(RolodexerError): pass
 
-# simple line assumptions
-SEP     = ','
-SEP_WS  = ', '
-D = re.compile(r'\D+') # kill non-digits
-digify = lambda term: D.subn('', term)[0]
+def reconstruct(tokens):
+    return SEP_WS.join(reversed(tokens))
 
-# simple term assumptions
-is_zip          = lambda term: len(digify(term)) == 5
-is_phone        = lambda term: len(digify(term)) == 10
-is_color        = lambda term: term.islower()
+class fieldtype(type):
+    def __new__(cls, name, bases, attrs):
+        # super_new bit cribbed from Django:
+        super_new = super(fieldtype, cls).__new__
+        # parents = [b for b in bases if isinstance(b, fieldtype)]
+        newcls = super_new(cls, name, bases, attrs)
+        if newcls.json_name != 'field':
+            FIELD_DMV.append(newcls)
+        return newcls
+    
+    def digify(cls, token):
+        return D.subn('', token)[0]
+    
+    def check(cls, token):
+        raise NotImplementedError()
 
-# format according to standards
-def phone_format(term):
-    return phonenumbers.format_number(
-        phonenumbers.parse(term, 'US'),
-        phonenumbers.PhoneNumberFormat)
+
+class FieldBase(object):
+    json_name = u'field'
+    
+    @property
+    def name(self):
+        return self.json_name
+    
+    def format(self, token):
+        return u"%s" % token
+    
+    def value_for_token(self, token):
+        return { self.name: self.format(token) }
+
+
+class Field(FieldBase):
+    __metaclass__ = fieldtype
+    
+    def unfound(self, token_list):
+        pass # Specifically, do not raise here
+
+
+class ZipcodeField(Field):
+    json_name = 'zipcode'
+    
+    class __metaclass__(fieldtype):
+        def check(cls, token):
+            return len(cls.digify(token)) == 5
+    
+    def unfound(self, token_list):
+        raise RDZipCodeError("No valid zip code in %d-term list\n"
+                             "Reconstructed original line:\n"
+                             "\t%s" % (len(token_list), reconstruct(token_list)))
+
+
+class ColorField(Field):
+    
+    json_name = 'color'
+    
+    class __metaclass__(fieldtype):
+        def check(cls, token):
+            return token.islower()
+
+
+class PhoneNumberField(Field):
+    json_name = 'phonenumber'
+    
+    class __metaclass__(fieldtype):
+        def check(cls, token):
+            return len(cls.digify(token)) == 10
+    
+    def format(self, token):
+        return u"%s" % phonenumbers.format_number(
+            phonenumbers.parse(token, 'US'),
+            phonenumbers.PhoneNumberFormat)
+    
+    def unfound(self, token_list):
+        raise RDPhoneNumberError("No valid phone number in %d-term list\n"
+                                 "Reconstructed original line:\n"
+                                 "\t%s" % (len(token_list), reconstruct(token_list)))
+
+class NameField(FieldBase):
+    def unfound(self, token_list):
+        raise RDAmbiguousNames("Only one name present!\n"
+                               "Reconstructed original line:\n"
+                               "\t%s" % reconstruct(token_list))
+
+class FirstNameField(NameField):
+    """ Special case for first-name fields """
+    json_name = u'firstname'
+
+class LastNameField(NameField):
+    """ Special case for last-name fields """
+    json_name = u'lastname'
+
 
 def tokenize(line_input):
-    """ basically: r"(name), (zip|phone|color),
-                             (zip|phone|color),
-                             (zip|phone|color)"
-    """
-    terms  = []
+    tokens  = []
     line    = unicode(line_input)
     
     while True:
@@ -47,101 +124,74 @@ def tokenize(line_input):
         if not first and not last:
             break
         line = first
-        terms.append(last)
-    return terms
+        tokens.append(last)
+    return tokens
 
-def reconstruct(terms):
-    return SEP_WS.join(reversed(terms))
 
-def classify(orig_terms):
+def classify(token_list):
     out = dict()
-    terms = copy(orig_terms)
+    tokens = copy(token_list)
     
-    # first, sanity-check the digified terms --
+    pprint(FIELD_DMV)
+    
+    # first, sanity-check the digified tokens --
     # if more than one can pass for a phone number, a color,
     # or a zip code (that is to say, the input is ambiguous),
     # we bail:
-    for term in terms:
+    for token in tokens:
         # check each term against all test funcs --
         # if more than one bucket is nonzero, it's a problem
         h = Histogram()
-        if is_zip(term):
-            h.inc('zip')
-        if is_phone(term):
-            h.inc('phone')
-        if is_color(term):
-            h.inc('color')
+        for FieldType in FIELD_DMV:
+            if FieldType.check(token):
+                h.inc(FieldType.json_name)
         if len(h) > 1:
             # ERROR: couldn't distinguish one thing
             # from another... BAIL
-            raise RDAmbiguousTerms("Term '%s' parsed ambiguously\n"
-                                   "Passed multiple tests: %s" % (
-                                       term, SEP_WS.join(h.iterkeys())
+            raise RDAmbiguousTerms("Token '%s' parsed ambiguously\n"
+                                   "Passed multiple field checks: %s" % (
+                                       token, SEP_WS.join(h.iterkeys())
                                    ))
     
-    # next, recurse and grab the phone number and color
-    # ... they are the easiest to find:
-    for idx, term in enumerate(copy(terms)):
-        # tref = terms[idx] # I do miss C++ sometimes
-        if is_phone(term):
-            out.update({ u'phonenumber': u"%s" % phone_format(term) })
-            terms.remove(term)
-            continue
-        elif is_color(term):
-            out.update({ u'color': u"%s" % term })
-            terms.remove(term)
-            continue
-        elif is_zip(term):
-            out.update({ u'zipcode': u"%s" % term })
-            terms.remove(term)
+    # update `out` with the classified tokens
+    for idx, token in enumerate(copy(tokens)):
+        for FieldType in FIELD_DMV:
+            if FieldType.check(token):
+                field = FieldType()
+                out.update(field.value_for_token(token))
+                tokens.remove(token)
             continue
     
-    if not out.has_key(u'phonenumber'):
-        # ERROR: NO PHONE / BAD PHONE!
-        raise RDPhoneNumberError("No valid phone number in %d-term list\n"
-                                 "Reconstructed original line:\n"
-                                 "\t%s" % (len(terms), reconstruct(orig_terms)))
-    
-    if not out.has_key(u'zipcode'):
-        # ERROR: NO ZIPCODE / BAD ZIPCODE!
-        raise RDZipCodeError("No valid zip code in %d-term list\n"
-                             "Reconstructed original line:\n"
-                             "\t%s" % (len(terms), reconstruct(orig_terms)))
-    
-    if not out.has_key(u'color'):
-        # LESS DISCONCERTING ERROR: NO COLOR / BAD COLOR!
-        pass
+    # raise appropriate errors when we don't find what we need
+    for FieldType in FIELD_DMV:
+        field = FieldType()
+        if not out.has_key(field.name):
+            field.unfound(token_list) # this may raise
     
     # what is left "should" be the pieces of the name,
     # e.g. ['Washington', 'Booker T.'], ['James Murphy'], &c
-    if len(terms) > 2:
+    first_field = FirstNameField()
+    last_field = LastNameField()
+    if len(tokens) > 2:
         # ERROR: wtf is going on
         pass
-    elif len(terms) == 2:
-        out.update({ 
-            u'firstname':    u"%s" % terms[-1],
-            u'lastname':     u"%s" % terms[0]
-        })
-    elif len(terms) == 1:
-        names = terms[0].split()
+    elif len(tokens) == 2:
+        out.update(first_field.value_for_token(tokens[-1]))
+        out.update(last_field.value_for_token(tokens[0]))
+    elif len(tokens) == 1:
+        names = tokens[0].split()
         if len(names) > 1:
-            out.update({
-                u'firstname':    u"%s" % names[0],
-                u'lastname':     u"%s" % names[-1]
-            })
+            out.update(first_field.value_for_token(names[0]))
+            out.update(last_field.value_for_token(names[-1]))
         else:
-            # ERROR: only one name -- `raise MadonnaError()` ?
-            # ... use it as the *last* name for now, maybe
-            # ... naw, f that: ERROR.
-            raise RDAmbiguousNames("Only one name present: '%s'\n"
-                                   "Reconstructed original line:\n"
-                                   "\t%s" % (names.pop(), reconstruct(orig_terms)))
-        
+            NameField().unfound(token_list)
     else:
         # WHY ARE WE HERE. No names... really??
         raise RDAmbiguousNames("No names present!"
                                "Reconstructed original line:\n"
-                               "\t%s" % reconstruct(orig_terms))
-        
+                               "\t%s" % reconstruct(token_list))
+    
     # pprint(out, indent=4)
     return out
+
+
