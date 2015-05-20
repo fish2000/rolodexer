@@ -1,8 +1,9 @@
 
 from __future__ import print_function
 
-import re, sys
-import usaddress
+import re
+# import sys
+# import usaddress
 import phonenumbers
 
 from copy import copy
@@ -53,9 +54,9 @@ def tokenize(line_input):
 def reconstruct(terms):
     return SEP_WS.join(reversed(terms))
 
-def classify(terms):
+def classify(orig_terms):
     out = dict()
-    orig = copy(terms)
+    terms = copy(orig_terms)
     
     # first, sanity-check the digified terms --
     # if more than one can pass for a phone number, a color,
@@ -78,20 +79,30 @@ def classify(terms):
                                    "Passed multiple tests: %s" % (
                                        term, SEP_WS.join(h.iterkeys())
                                    ))
-    
+    # pprint(out)
+    # pprint(terms)
     # next, recurse and grab the phone number and color
     # ... they are the easiest to find:
-    for idx, term in enumerate(terms):
+    for idx, term in enumerate(copy(terms)):
         # tref = terms[idx] # I do miss C++ sometimes
         if is_phone(term):
             out.update({ 'phonenumber': phone_format(term) })
-            del terms[idx]
+            # del terms[idx]
+            terms.remove(term)
             continue
-        if is_color(term):
+        elif is_color(term):
             out.update({ 'color': term })
-            del terms[idx]
+            # del terms[idx]
+            terms.remove(term)
+            continue
+        elif is_zip(term):
+            out.update({ 'zipcode': term })
+            # del terms[idx]
+            terms.remove(term)
             continue
     
+    # pprint(out)
+    # pprint(terms)
     if not out.has_key('phonenumber'):
         # ERROR: NO PHONE / BAD PHONE!
         raise RDPhoneNumberError("No valid phone number in %d-term list\n"
@@ -108,7 +119,17 @@ def classify(terms):
     #   * 'ZipCode'             - good (5- or 9-digit)
     #   * 'OccupancyIdentifier' - specious (likely contains hyphen)
     #   * 'AddressNumber'       - WTF (nonsense digits)
-    address = dict(usaddress.parse(reconstruct(terms)))
+    '''
+    reconstructed = reconstruct(terms)
+    address = dict(map(
+        lambda tup: tuple(reversed(tup)),
+        usaddress.parse(reconstructed)))
+    # address = usaddress.parse(reconstructed)
+    zip_term = ''
+    
+    print("RECONSTRUCTED: %s" % reconstructed)
+    print("ADDRESS: %s" % address)
+    
     if address.has_key('ZipCode'):
         # all set
         zip_term = str(address.get('ZipCode'))
@@ -120,9 +141,14 @@ def classify(terms):
         # ERROR SRSLY: couldn't positively ID a zip
         # ... oh well, it takes all kinds, as they say:
         zip_term = str(address.get('AddressNumber'))
-    out.update({ 'zipcode': zip_term }) # update output dict
-    terms.remove(zip_term)              # pluck out the zip term
     
+    if zip_term:
+        out.update({ 'zipcode': zip_term }) # update output dict
+        terms.remove(zip_term)              # pluck out the zip term
+    
+    # is it an ERROR if there is no zipcode?
+    # ... wow, that's, like, a zen koan or somesuch
+    '''
     # what is left "should" be the pieces of the name,
     # e.g. ['Washington', 'Booker T.'], ['James Murphy'], &c
     if len(terms) > 2:

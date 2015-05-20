@@ -108,7 +108,7 @@ class RolodexerTests(unittest.TestCase):
         self.assertFalse(rolodexer.is_zip('yellow'))
         self.assertFalse(rolodexer.is_zip('018 154 6474'))
     
-    def _test_classify(self):
+    def test_classify(self):
         terms = [
             'yellow', '373 781 7380', '87360',
             'Washington', 'Booker T.']
@@ -122,11 +122,11 @@ class RolodexerTests(unittest.TestCase):
         self.assertTrue('color' in keys)
         self.assertTrue('zipcode' in keys)
         
-        self.assertTrue(out['color']        == terms[0])
-        self.assertTrue(out['phonenumber']  == terms[1])
-        self.assertTrue(out['zipcode']      == terms[2])
-        self.assertTrue(out['lastname']     == terms[3])
-        self.assertTrue(out['firstname']    == terms[4])
+        self.assertEqual(out['color'],          terms[0])
+        self.assertEqual(out['phonenumber'],    rolodexer.phone_format(terms[1]))
+        self.assertEqual(out['zipcode'],        terms[2])
+        self.assertEqual(out['lastname'],       terms[3])
+        self.assertEqual(out['firstname'],      terms[4])
     
     def test_tokenize_classify(self):
         pass
