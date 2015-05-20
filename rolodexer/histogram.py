@@ -20,7 +20,12 @@ class AutoInc(object):
     __slots__ = ('v',)
     
     def __init__(self, value=0):
-        self.v = value
+        try:
+            # assume we got another AutoInc ...
+            # ... I could sure use SFINAE right about now
+            self.v = value.v
+        except AttributeError:
+            self.v = int(value)
     
     def __call__(self):
         self.v += 1
@@ -66,11 +71,11 @@ class Histogram(defaultdict):
         super(Histogram, self).__init__(
             Histogram.autoinc, *tuple(), **kwargs)
     
-    def __setitem__(self, i, y):
-        try:
-            self[i] = AutoInc(int(y))
-        except ValueError: # failed integer conversion
-            self[i] = y
+    # def __setitem__(self, i, y):
+    #     try:
+    #         self[i] = AutoInc(y)
+    #     except (ValueError, AttributeError): # failed integer conversion
+    #         self[i] = y
     
     def prettyprint(self, **kwargs):
         from pprint import pformat
@@ -88,10 +93,10 @@ class Histogram(defaultdict):
             width=len(longest_key)/2)
     
     def inc(self, idx):
-        self[idx]()
+        return self[str(idx)]()
     
     def add(self, idx, value):
-        self[idx].add(value)
+        return self[str(idx)].add(value)
     
     def keyset_hash(self):
         return hex(abs(hash(self.iterkeys())))
@@ -156,3 +161,45 @@ if __name__ == '__main__':
     print(Hh.normalize())
     
     print("MAX Hh: %s" % max(*(int(v) for v in Hh.values())))
+    
+    Hp.inc('color')
+    Hp.inc('color')
+    Hp.inc('color')
+    Hp.inc('color')
+    Hp.inc('color')
+    Hp.inc('color')
+    
+    Hp.inc('zip')
+    Hp.inc('zip')
+    
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    Hp.inc('phone')
+    
+    print(Hp)
+    
+    print(Hp.freeze()._asdict())
+    print(Hp.normalize())
+    
+    print("MAX Hp: %s" % max(*(int(v) for v in Hp.values())))

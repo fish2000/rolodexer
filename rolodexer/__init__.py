@@ -1,5 +1,7 @@
 
-import re
+from __future__ import print_function
+
+import re, sys
 import usaddress
 import phonenumbers
 
@@ -80,13 +82,13 @@ def classify(terms):
     # next, recurse and grab the phone number and color
     # ... they are the easiest to find:
     for idx, term in enumerate(terms):
-        tref = terms[idx] # I do miss C++ sometimes
-        if is_phone(tref):
-            out.update({ 'phonenumber': phone_format(tref) })
+        # tref = terms[idx] # I do miss C++ sometimes
+        if is_phone(term):
+            out.update({ 'phonenumber': phone_format(term) })
             del terms[idx]
             continue
-        elif is_color(tref):
-            out.update({ 'color': tref })
+        if is_color(term):
+            out.update({ 'color': term })
             del terms[idx]
             continue
     
