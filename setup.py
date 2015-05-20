@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 name = 'rolodexer'
-long_name = 'rolodexer'
+long_name = 'python-rolodexer'
 version = '0.1.0'
 packages = [name]
 description = "Parse rolodex data and output JSON"

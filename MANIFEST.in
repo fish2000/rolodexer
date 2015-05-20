@@ -3,6 +3,7 @@ include requirements.txt
 include .gitignore
 include setup.py
 include setup.cfg
+include result.out
 recursive-include data *
 recursive-include docs *
 recursive-include test *
