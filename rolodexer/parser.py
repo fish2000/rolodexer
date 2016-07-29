@@ -3,7 +3,6 @@ import re
 import phonenumbers
 
 from copy import copy
-# from pprint import pprint
 from histogram import Histogram
 
 SEP     = ','
@@ -132,6 +131,7 @@ def classify(token_list):
     out = dict()
     tokens = copy(token_list)
     
+    # from pprint import pprint
     # pprint(FIELD_DMV)
     
     # first, sanity-check the digified tokens --

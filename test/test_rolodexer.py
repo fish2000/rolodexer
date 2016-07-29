@@ -126,8 +126,10 @@ class RolodexerTests(unittest.TestCase):
     
     def test_file_read(self):
         from os.path import join, dirname
+        from rolodexer.histogram import Histogram
         entries = []
         errors  = []
+        colors  = Histogram()
         inpth = join(dirname(dirname(__file__)), 'data', 'data.in')
         with open(inpth, 'rb') as fh:
             idx = 0
@@ -143,10 +145,16 @@ class RolodexerTests(unittest.TestCase):
                     errors.append(idx)
                 else:
                     entries.append(terms)
+                    colors.inc(terms.get('color', 'CLEAR'))
                 idx += 1
             output_dict = { u"entries": entries, u"errors": errors }
             output_json = json.dumps(output_dict, indent=2, sort_keys=True)
             print(output_json)
+            print(colors)
+            # all classified lines have colors:
+            self.assertEquals(colors.min(), 3)
+            self.assertEquals(colors.max(), 10)
+            self.assertEquals(colors.val('CLEAR'), 0)
 
 if __name__ == '__main__':
     unittest.main()
