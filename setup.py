@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
+fish2000 = 'fish2000'
 name = 'rolodexer'
 long_name = 'rolodexer'
-version = '0.1.2'
+version = '0.1.3'
 packages = [name]
 description = "Parse rolodex data and output JSON"
 
@@ -50,11 +51,11 @@ setup(
 
     name=long_name, version=version, description=description,
     long_description=long_description,
-    download_url=('http://bitbucket.org/fish2000/%s/zipball/master' % long_name),
+    download_url=('https://github.com/%s/%s/archive/master.zip' % (fish2000, name)),
 
     author=u"Alexander Bohn",
-    author_email='fish2000@gmail.com',
-    url='http://bitbucket.org/fish2000/%s' % long_name,
+    author_email='%s@gmail.com' % fish2000,
+    url='http://github.com/%s/%s' % (fish2000, name),
     license='GPLv2',
     keywords=', '.join(keywords),
     platforms=['any'],

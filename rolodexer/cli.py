@@ -35,7 +35,7 @@ def cli(argv=None):
     
     arguments = docopt(__doc__, argv=argv[1:],
                                 help=True,
-                                version='0.1.2')
+                                version='0.1.3')
     
     # print(argv)
     # print(arguments)
