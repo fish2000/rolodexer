@@ -44,9 +44,9 @@ Install with Pip, via PyPI:
 
     $ pip install -U rolodexer
 
-… Or via Bitbucket:
+… Or via GitHub:
 
-    $ git clone https://bitbucket.org/fish2000/rolodexer.git
+    $ git clone https://github.com/fish2000/rolodexer.git
     $ cd rolodexer
     $ pip install -U -r requirements.txt
     $ pip install -U .
