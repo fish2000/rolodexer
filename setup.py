@@ -2,7 +2,7 @@
 
 name = 'rolodexer'
 long_name = 'rolodexer'
-version = '0.1.1'
+version = '0.1.2'
 packages = [name]
 description = "Parse rolodex data and output JSON"
 
